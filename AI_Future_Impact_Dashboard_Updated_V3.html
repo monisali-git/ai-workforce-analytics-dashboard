@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Future Impact Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: #f0f2f5;
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1a2e;
+  min-height: 100vh;
+}
+
+/* ── TOP HEADER ── */
+.header {
+  background: #1a3a2a;
+  padding: 0 28px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-title {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-title .dot {
+  width: 8px; height: 8px;
+  background: #2ecc71;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #2ecc71;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-chip {
+  background: rgba(255,255,255,0.12);
+  color: #cde8d8;
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+/* ── FILTERS BAR ── */
+.filters-bar {
+  background: #fff;
+  border-bottom: 1px solid #e0e6e0;
+  padding: 10px 28px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filters-bar label {
+  font-size: 0.72rem;
+  color: #666;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+select {
+  border: 1px solid #d5e0d5;
+  background: #f7faf7;
+  color: #1a1a2e;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+select:focus { border-color: #27ae60; box-shadow: 0 0 0 3px rgba(39,174,96,0.12); }
+.filter-group { display: flex; align-items: center; gap: 6px; }
+
+/* ── MAIN ── */
+main {
+  padding: 20px 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── KPI ROW ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.kpi-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 18px;
+  border-top: 3px solid #27ae60;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: default;
+}
+.kpi-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
+.kpi-card.orange { border-top-color: #e67e22; }
+.kpi-card.red    { border-top-color: #e74c3c; }
+.kpi-card.blue   { border-top-color: #2980b9; }
+.kpi-card.teal   { border-top-color: #16a085; }
+.kpi-card.purple { border-top-color: #8e44ad; }
+.kpi-label {
+  font-size: 0.68rem;
+  color: #888;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.kpi-val {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1;
+}
+.kpi-sub {
+  font-size: 0.68rem;
+  color: #aaa;
+  margin-top: 4px;
+}
+.kpi-icon {
+  font-size: 1.3rem;
+  float: right;
+  margin-top: -2px;
+}
+
+/* ── CHART GRID ── */
+.row {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.row.c2 { grid-template-columns: 1fr 1fr; }
+.row.c3 { grid-template-columns: 2fr 1fr 1fr; }
+.row.c21 { grid-template-columns: 2fr 1fr; }
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.09); }
+.card-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1a3a2a;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.card-title .bar {
+  width: 3px; height: 14px;
+  background: #27ae60;
+  border-radius: 2px;
+}
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap.sm { height: 180px; }
+.chart-wrap.lg { height: 260px; }
+.chart-wrap.full { height: 100%; min-height: 250px; }
+
+/* ── PROGRESS BARS ── */
+.prog-list { display: flex; flex-direction: column; gap: 11px; }
+.prog-item {}
+.prog-head { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.prog-name { font-size: 0.78rem; color: #444; font-weight: 500; }
+.prog-pct  { font-size: 0.78rem; color: #1a1a2e; font-weight: 600; }
+.prog-track {
+  height: 7px;
+  background: #eef2ee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1.4s cubic-bezier(.4,0,.2,1);
+}
+.prog-fill.g  { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+.prog-fill.y  { background: linear-gradient(90deg, #f39c12, #f1c40f); }
+.prog-fill.r  { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+thead th {
+  background: #f4f8f4;
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  font-weight: 600;
+  border-bottom: 2px solid #e0ece0;
+}
+td { padding: 8px 12px; color: #333; border-bottom: 1px solid #f0f0f0; }
+tr:hover td { background: #f7fbf7; }
+.badge {
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.badge.High   { background: #fde8e8; color: #c0392b; }
+.badge.Medium { background: #fef3d0; color: #d35400; }
+.badge.Low    { background: #e2f5ea; color: #1e8449; }
+
+/* ── FOOTER ── */
+footer {
+  text-align: center;
+  padding: 14px;
+  font-size: 0.72rem;
+  color: #aaa;
+  border-top: 1px solid #e8e8e8;
+  margin-top: 10px;
+}
+
+@media(max-width:1000px) {
+  .kpi-row { grid-template-columns: repeat(3,1fr); }
+  .row.c2,.row.c3,.row.c21 { grid-template-columns: 1fr; }
+}
+@media(max-width:600px) {
+  .kpi-row { grid-template-columns: repeat(2,1fr); }
+  main { padding: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">
+    <div class="dot"></div>
+    AI Future Impact — Workforce Analytics Dashboard
+  </div>
+  <div class="header-right">
+    <span class="header-chip">15,000 Records</span>
+    <span class="header-chip">2020 – 2026</span>
+    <span class="header-chip">10 Job Roles · 8 Industries · 9 Countries</span>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <div class="filter-group">
+    <label>Industry</label>
+    <select id="fInd"><option value="all">All Industries</option>
+      <option>Technology</option><option>Finance</option><option>Healthcare</option>
+      <option>Manufacturing</option><option>Education</option><option>Retail</option>
+      <option>Transportation</option><option>Energy</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Country</label>
+    <select id="fCnt"><option value="all">All Countries</option>
+      <option>USA</option><option>UK</option><option>Canada</option>
+      <option>Australia</option><option>Germany</option><option>Japan</option>
+      <option>India</option><option>Singapore</option><option>Brazil</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Year</label>
+    <select id="fYr"><option value="all">All Years</option>
+      <option>2020</option><option>2021</option><option>2022</option>
+      <option>2023</option><option>2024</option><option>2025</option><option>2026</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Risk Level</label>
+    <select id="fRsk"><option value="all">All</option>
+      <option>High</option><option>Medium</option><option>Low</option>
+    </select>
+  </div>
+</div>
+
+<main>
+
+<!-- KPI ROW -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <span class="kpi-icon">🤖</span>
+    <div class="kpi-label">Avg Automation Risk</div>
+    <div class="kpi-val">46.18%</div>
+    <div class="kpi-sub">All roles combined</div>
+  </div>
+  <div class="kpi-card red">
+    <span class="kpi-icon">⚡</span>
+    <div class="kpi-label">AI Replacement Score</div>
+    <div class="kpi-val">46.16</div>
+    <div class="kpi-sub">Avg score / 100</div>
+  </div>
+  <div class="kpi-card blue">
+    <span class="kpi-icon">💰</span>
+    <div class="kpi-label">Avg Salary Before AI</div>
+    <div class="kpi-val">$89,771</div>
+    <div class="kpi-sub">Annual USD</div>
+  </div>
+  <div class="kpi-card teal">
+    <span class="kpi-icon">📈</span>
+    <div class="kpi-label">Avg Salary After AI</div>
+    <div class="kpi-val">$89,871</div>
+    <div class="kpi-sub">+$100 change</div>
+  </div>
+  <div class="kpi-card orange">
+    <span class="kpi-icon">🎓</span>
+    <div class="kpi-label">Reskilling Urgency</div>
+    <div class="kpi-val">35.87</div>
+    <div class="kpi-sub">Avg urgency score</div>
+  </div>
+  <div class="kpi-card purple">
+    <span class="kpi-icon">📊</span>
+    <div class="kpi-label">Total Records</div>
+    <div class="kpi-val">15,000</div>
+    <div class="kpi-sub">Data points</div>
+  </div>
+</div>
+
+<!-- ROW 1 -->
+<div class="row c2">
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>Automation Risk Trend 2020–2026</div>
+    <div class="chart-wrap">
+      <canvas id="c3"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>AI Adoption Level by Industry</div>
+    <div class="chart-wrap">
+      <canvas id="c4"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2 -->
+<div class="row c2">
+  <div class="card" style="display: flex; flex-direction: column;">
+    <div class="card-title"><span class="bar"></span>Risk Category Distribution</div>
+    <div class="chart-wrap full">
+      <canvas id="c2"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>Job Risk Gauge</div>
+    <div class="prog-list" id="progList"></div>
+  </div>
+</div>
+
+
+<!-- ROW 3 -->
+<div class="row c21">
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>AI Replacement Score by Country</div>
+    <div class="chart-wrap sm">
+      <canvas id="c6"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>Skill Gap vs Reskilling</div>
+    <div class="chart-wrap sm">
+      <canvas id="c7"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="card" style="margin-bottom:10px">
+  <div class="card-title"><span class="bar"></span>Records Preview — Top 10 Entries</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Job Role</th><th>Industry</th><th>Country</th>
+          <th>Year</th><th>Automation %</th><th>AI Score</th><th>Salary Before</th><th>Salary After</th><th>Risk</th>
+        </tr>
+      </thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
+</div>
+
+</main>
+<footer>AI Future Impact Analytics &nbsp;·&nbsp; 15,000 Records &nbsp;·&nbsp; 2020–2026 &nbsp;·&nbsp; Monis Ali</footer>
+
+<script>
+Chart.register(ChartDataLabels);
+Chart.defaults.font.family = 'DM Sans';
+Chart.defaults.color = '#666';
+Chart.defaults.borderColor = '#eee';
+Chart.defaults.set('plugins.datalabels', {
+  color: '#444',
+  font: { weight: 'bold', size: 10 }
+});
+
+const G = '#27ae60', G2 = '#2ecc71', G3 = 'rgba(39,174,96,0.15)';
+const RED = '#e74c3c', ORG = '#e67e22', BLU = '#2980b9', TEA = '#16a085';
+
+
+// Chart 2 – Donut: Risk Categories
+new Chart('c2', {
+  type:'doughnut',
+  data:{
+    labels:['High Risk (4,496)','Medium Risk (6,464)','Low Risk (4,040)'],
+    datasets:[{
+      data:[4496,6464,4040],
+      backgroundColor:['rgba(231,76,60,0.85)','rgba(230,126,22,0.85)','rgba(39,174,96,0.85)'],
+      borderColor:['#fff','#fff','#fff'], borderWidth:3, hoverOffset:10
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, cutout:'50%',
+    layout: { padding: 0 },
+    plugins:{
+      datalabels: {
+        color: '#fff',
+        formatter: (value) => value.toLocaleString(),
+        font: { size: 14, weight: 'bold' }
+      },
+      legend:{ position:'bottom', labels:{ padding:14, font:{size:12}, boxWidth:12 } },
+      tooltip:{ callbacks:{ label: c=>` ${c.label}: ${c.raw.toLocaleString()}` } }
+    }
+  }
+});
+
+// Chart 3 – Line: Trend
+const ctx3 = document.getElementById('c3').getContext('2d');
+const grad3 = ctx3.createLinearGradient(0,0,0,220);
+grad3.addColorStop(0,'rgba(39,174,96,0.25)'); grad3.addColorStop(1,'rgba(39,174,96,0)');
+new Chart(ctx3, {
+  type:'line',
+  data:{
+    labels:['2020','2021','2022','2023','2024','2025','2026'],
+    datasets:[{
+      label:'Automation Risk %',
+      data:[46.50,46.10,46.31,46.51,45.36,45.56,46.87],
+      borderColor:G, backgroundColor:grad3,
+      borderWidth:2.5, fill:true, tension:0.4,
+      pointBackgroundColor:G, pointBorderColor:'#fff', pointBorderWidth:2,
+      pointRadius:5, pointHoverRadius:7
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    layout: { padding: { top: 20 } },
+    plugins:{ 
+      datalabels: {
+        align: 'top',
+        anchor: 'end',
+        formatter: (value) => value.toFixed(1) + '%'
+      },
+      legend:{display:false} 
+    },
+    scales:{
+      y:{ min:44.5, max:48.5, grid:{color:'#f0f0f0'}, ticks:{callback:v=>v+'%'} },
+      x:{ grid:{display:false} }
+    }
+  }
+});
+
+// Chart 4 – Bar: AI Adoption by Industry
+new Chart('c4', {
+  type:'bar',
+  data:{
+    labels:['Transport.','Manufact.','Finance','Retail','Healthcare','Education','Technology','Energy'],
+    datasets:[{
+      label:'AI Adoption Level',
+      data:[50.72,50.44,50.26,50.23,49.22,49.01,48.53,49.97],
+      backgroundColor:'rgba(41,128,185,0.75)',
+      borderColor:BLU, borderWidth:1, borderRadius:4
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    layout: { padding: { top: 20 } },
+    plugins:{ 
+      datalabels: {
+        align: 'top',
+        anchor: 'end',
+        formatter: (value) => value.toFixed(1)
+      },
+      legend:{display:false} 
+    },
+    scales:{
+      y:{ min:47.5, max:52.5, grid:{color:'#f0f0f0'} },
+      x:{ grid:{display:false}, ticks:{font:{size:11}} }
+    }
+  }
+});
+
+// Chart 6 – Bar: Country AI Replacement
+new Chart('c6', {
+  type:'bar',
+  data:{
+    labels:['Singapore','Australia','UK','Japan','India','Canada','USA','Brazil','Germany'],
+    datasets:[{
+      data:[46.59,46.44,46.42,46.37,46.28,46.20,45.94,45.62,45.50],
+      backgroundColor: [
+        'rgba(39,174,96,0.8)','rgba(39,174,96,0.7)','rgba(39,174,96,0.65)',
+        'rgba(22,160,133,0.7)','rgba(22,160,133,0.65)','rgba(22,160,133,0.6)',
+        'rgba(41,128,185,0.7)','rgba(41,128,185,0.65)','rgba(41,128,185,0.6)'
+      ],
+      borderRadius:4, borderWidth:0
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    layout: { padding: { top: 20 } },
+    plugins:{ 
+      datalabels: {
+        align: 'top',
+        anchor: 'end',
+        formatter: (value) => value.toFixed(1)
+      },
+      legend:{display:false} 
+    },
+    scales:{
+      y:{ min:44.5, max:48.5, grid:{color:'#f0f0f0'} },
+      x:{ grid:{display:false}, ticks:{font:{size:10}} }
+    }
+  }
+});
+
+// Chart 7 – Scatter: Skill Gap vs Reskilling Urgency (by role)
+new Chart('c7', {
+  type:'bubble',
+  data:{
+    datasets:[{
+      label:'Job Roles',
+      data:[
+        {x:73,y:33,r:8,role:'Data Analyst'},
+        {x:2,y:22,r:7,role:'Accountant'},
+        {x:43,y:28,r:6,role:'Teacher'},
+        {x:19,y:30,r:7,role:'Cust. Support'},
+        {x:3,y:6,r:5,role:'Fin. Analyst'},
+        {x:76,y:26,r:6,role:'Software Eng.'},
+        {x:96,y:48,r:8,role:'Mechanical Eng.'},
+        {x:31,y:25,r:6,role:'HR Manager'},
+        {x:5,y:12,r:7,role:'Marketing'},
+        {x:67,y:54,r:9,role:'Truck Driver'},
+      ],
+      backgroundColor:'rgba(39,174,96,0.55)',
+      borderColor:G, borderWidth:1.5
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    layout: { padding: { top: 20, right: 20 } },
+    plugins:{
+      datalabels: {
+        align: 'top',
+        anchor: 'end',
+        formatter: (value) => value.role,
+        font: { size: 9 },
+        color: '#222'
+      },
+      legend:{display:false},
+      tooltip:{ callbacks:{ label: c=>` ${c.raw.role}: Gap=${c.raw.x}, Urgency=${c.raw.y}` } }
+    },
+    scales:{
+      x:{ title:{display:true,text:'Skill Gap Index',font:{size:11}}, grid:{color:'#f0f0f0'} },
+      y:{ title:{display:true,text:'Reskilling Urgency',font:{size:11}}, grid:{color:'#f0f0f0'} }
+    }
+  }
+});
+
+// Progress Bars
+const progData = [
+  {n:'Truck Driver',v:60.74},{n:'Customer Support',v:59.85},{n:'Marketing Spec.',v:45.44},
+  {n:'Mechanical Eng.',v:45.40},{n:'Teacher',v:45.14},{n:'HR Manager',v:45.09},
+  {n:'Accountant',v:44.98},{n:'Financial Analyst',v:44.70},
+  {n:'Data Analyst',v:35.46},{n:'Software Engineer',v:34.85}
+];
+const pl = document.getElementById('progList');
+pl.innerHTML = progData.map(d=>{
+  const cls = d.v>55?'r': d.v>44?'y':'g';
+  return `<div class="prog-item">
+    <div class="prog-head"><span class="prog-name">${d.n}</span><span class="prog-pct">${d.v.toFixed(1)}%</span></div>
+    <div class="prog-track"><div class="prog-fill ${cls}" style="width:${d.v}%"></div></div>
+  </div>`;
+}).join('');
+
+// Table
+const rows = [
+  [1,'Data Analyst','Technology','Canada',2021,26.22,30.94,'$101,839','$99,454','Low'],
+  [2,'Accountant','Finance','Brazil',2020,52.08,56.41,'$146,389','$139,516','Medium'],
+  [3,'Teacher','Technology','USA',2020,31.30,31.61,'$64,947','$58,369','Medium'],
+  [4,'Customer Support Rep','Technology','Brazil',2021,56.92,63.42,'$91,708','$86,715','Medium'],
+  [5,'Teacher','Manufacturing','Japan',2024,14.55,17.17,'$127,007','$119,379','Low'],
+  [6,'Software Engineer','Healthcare','Singapore',2022,8.54,8.53,'$139,118','$150,561','Low'],
+  [7,'Accountant','Manufacturing','Australia',2020,48.27,42.18,'$123,015','$132,100','Medium'],
+  [8,'Teacher','Finance','Australia',2026,13.17,12.25,'$62,561','$59,680','Low'],
+  [9,'Marketing Specialist','Retail','USA',2025,19.86,22.27,'$148,426','$138,379','Low'],
+  [10,'Financial Analyst','Finance','Singapore',2020,59.48,64.93,'$38,885','$35,622','Medium'],
+];
+document.getElementById('tbl').innerHTML = rows.map(r=>
+  `<tr>
+    <td>${r[0]}</td><td><b>${r[1]}</b></td><td>${r[2]}</td><td>${r[3]}</td>
+    <td>${r[4]}</td><td>${r[5]}%</td><td>${r[6]}</td>
+    <td>${r[7]}</td><td>${r[8]}</td>
+    <td><span class="badge ${r[9]}">${r[9]}</span></td>
+  </tr>`
+).join('');
+</script>
+</body>
+</html>
