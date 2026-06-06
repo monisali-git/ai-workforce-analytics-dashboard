@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Future Impact Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #27ae60;
+  --green2: #2ecc71;
+  --red: #e74c3c;
+  --orange: #e67e22;
+  --blue: #2980b9;
+  --teal: #16a085;
+  --purple: #8e44ad;
+  --bg: #eef1f5;
+  --card-bg: #fff;
+  --header-bg: #152a1e;
+  --text: #1a1a2e;
+  --text-muted: #888;
+  --border: #e0e6e0;
+  --shadow: 0 2px 8px rgba(0,0,0,0.07);
+  --shadow-hover: 0 6px 22px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--header-bg);
+  padding: 0 28px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+.header-title {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pulse-dot {
+  width: 9px; height: 9px;
+  background: var(--green2);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(46,204,113,0.4);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(46,204,113,0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(46,204,113,0); }
+  100% { box-shadow: 0 0 0 0 rgba(46,204,113,0); }
+}
+.header-chips { display: flex; gap: 8px; align-items: center; }
+.chip {
+  background: rgba(255,255,255,0.1);
+  color: #b8dfc7;
+  font-size: 0.7rem;
+  padding: 3px 11px;
+  border-radius: 20px;
+  letter-spacing: 0.4px;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+/* ── FILTERS ── */
+.filters-bar {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filter-group { display: flex; align-items: center; gap: 7px; }
+.filter-group label {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+select {
+  border: 1px solid var(--border);
+  background: #f7faf7;
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  padding-right: 28px;
+}
+select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(39,174,96,0.12); }
+
+.filter-reset {
+  margin-left: auto;
+  background: none;
+  border: 1px solid #ccc;
+  color: #666;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-reset:hover { border-color: var(--green); color: var(--green); }
+
+/* ── MAIN ── */
+main { padding: 22px 24px; max-width: 1440px; margin: 0 auto; }
+
+/* ── KPI ROW ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.kpi-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 18px 18px 14px;
+  border-top: 3px solid var(--green);
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.25s, transform 0.25s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(39,174,96,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+.kpi-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-3px); }
+.kpi-card.orange { border-top-color: var(--orange); }
+.kpi-card.orange::before { background: linear-gradient(135deg, rgba(230,126,22,0.04) 0%, transparent 60%); }
+.kpi-card.red    { border-top-color: var(--red); }
+.kpi-card.red::before    { background: linear-gradient(135deg, rgba(231,76,60,0.04) 0%, transparent 60%); }
+.kpi-card.blue   { border-top-color: var(--blue); }
+.kpi-card.blue::before   { background: linear-gradient(135deg, rgba(41,128,185,0.04) 0%, transparent 60%); }
+.kpi-card.teal   { border-top-color: var(--teal); }
+.kpi-card.teal::before   { background: linear-gradient(135deg, rgba(22,160,133,0.04) 0%, transparent 60%); }
+.kpi-card.purple { border-top-color: var(--purple); }
+.kpi-card.purple::before { background: linear-gradient(135deg, rgba(142,68,173,0.04) 0%, transparent 60%); }
+.kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.kpi-label {
+  font-size: 0.67rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.kpi-icon { font-size: 1.4rem; line-height: 1; }
+.kpi-val {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.5px;
+  transition: all 0.3s;
+}
+.kpi-sub { font-size: 0.67rem; color: #bbb; margin-top: 5px; }
+
+/* ── GRID LAYOUT ── */
+.row { display: grid; gap: 14px; margin-bottom: 14px; }
+.row.c2  { grid-template-columns: 1fr 1fr; }
+.row.c21 { grid-template-columns: 2fr 1fr; }
+
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.25s;
+}
+.card:hover { box-shadow: var(--shadow-hover); }
+.card-title {
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #1a3a2a;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .bar { width: 3px; height: 14px; background: var(--green); border-radius: 2px; }
+.chart-wrap { position: relative; }
+.chart-wrap.h220 { height: 220px; }
+.chart-wrap.h200 { height: 200px; }
+.chart-wrap.h180 { height: 180px; }
+
+/* ── PROGRESS BARS ── */
+.prog-list { display: flex; flex-direction: column; gap: 12px; }
+.prog-head { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.prog-name { font-size: 0.78rem; color: #444; font-weight: 500; }
+.prog-pct  { font-size: 0.78rem; color: var(--text); font-weight: 700; font-family: 'DM Mono', monospace; }
+.prog-track {
+  height: 7px;
+  background: #eff2ef;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  border-radius: 10px;
+  width: 0;
+  transition: width 1.2s cubic-bezier(.4,0,.2,1);
+}
+.prog-fill.g  { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+.prog-fill.y  { background: linear-gradient(90deg, #d35400, #e67e22); }
+.prog-fill.r  { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+thead th {
+  background: #f4f8f4;
+  padding: 10px 13px;
+  text-align: left;
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #555;
+  font-weight: 700;
+  border-bottom: 2px solid #ddeedd;
+  white-space: nowrap;
+}
+td {
+  padding: 9px 13px;
+  color: #333;
+  border-bottom: 1px solid #f2f2f2;
+  font-size: 0.8rem;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #f7fbf7; }
+.badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.badge.High   { background: #fde8e8; color: #c0392b; }
+.badge.Medium { background: #fff3e0; color: #d35400; }
+.badge.Low    { background: #e2f5ea; color: #1e8449; }
+
+/* ── NO DATA STATE ── */
+.no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  color: #bbb;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ── FOOTER ── */
+footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 0.72rem;
+  color: #aaa;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  letter-spacing: 0.3px;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px) {
+  .kpi-row { grid-template-columns: repeat(3,1fr); }
+  .row.c2, .row.c21 { grid-template-columns: 1fr; }
+}
+@media(max-width:600px) {
+  .kpi-row { grid-template-columns: repeat(2,1fr); }
+  main { padding: 12px; }
+  .header-chips .chip:not(:first-child) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">
+    <div class="pulse-dot"></div>
+    AI Future Impact — Workforce Analytics Dashboard
+  </div>
+  <div class="header-chips">
+    <span class="chip">15,000 Records</span>
+    <span class="chip">2020–2026</span>
+    <span class="chip">10 Roles · 8 Industries · 9 Countries</span>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <div class="filter-group">
+    <label>Industry</label>
+    <select id="fInd">
+      <option value="all">All Industries</option>
+      <option>Technology</option><option>Finance</option><option>Healthcare</option>
+      <option>Manufacturing</option><option>Education</option><option>Retail</option>
+      <option>Transportation</option><option>Energy</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Country</label>
+    <select id="fCnt">
+      <option value="all">All Countries</option>
+      <option>USA</option><option>UK</option><option>Canada</option>
+      <option>Australia</option><option>Germany</option><option>Japan</option>
+      <option>India</option><option>Singapore</option><option>Brazil</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Year</label>
+    <select id="fYr">
+      <option value="all">All Years</option>
+      <option>2020</option><option>2021</option><option>2022</option>
+      <option>2023</option><option>2024</option><option>2025</option><option>2026</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Risk Level</label>
+    <select id="fRsk">
+      <option value="all">All Risks</option>
+      <option>High</option><option>Medium</option><option>Low</option>
+    </select>
+  </div>
+  <button class="filter-reset" id="btnReset">↺ Reset Filters</button>
+</div>
+
+<main>
+
+<!-- KPI CARDS -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-top"><div class="kpi-label">Avg Automation Risk</div><div class="kpi-icon">🤖</div></div>
+    <div class="kpi-val" id="kv1">46.18%</div>
+    <div class="kpi-sub">All roles combined</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-top"><div class="kpi-label">AI Replacement Score</div><div class="kpi-icon">⚡</div></div>
+    <div class="kpi-val" id="kv2">46.16</div>
+    <div class="kpi-sub">Avg score / 100</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-top"><div class="kpi-label">Avg Salary Before AI</div><div class="kpi-icon">💰</div></div>
+    <div class="kpi-val" id="kv3">$89,771</div>
+    <div class="kpi-sub">Annual USD</div>
+  </div>
+  <div class="kpi-card teal">
+    <div class="kpi-top"><div class="kpi-label">Avg Salary After AI</div><div class="kpi-icon">📈</div></div>
+    <div class="kpi-val" id="kv4">$89,871</div>
+    <div class="kpi-sub">+$100 avg change</div>
+  </div>
+  <div class="kpi-card orange">
+    <div class="kpi-top"><div class="kpi-label">Reskilling Urgency</div><div class="kpi-icon">🎓</div></div>
+    <div class="kpi-val" id="kv5">35.87</div>
+    <div class="kpi-sub">Avg urgency score</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-top"><div class="kpi-label">Records Shown</div><div class="kpi-icon">📊</div></div>
+    <div class="kpi-val" id="kv6">15,000</div>
+    <div class="kpi-sub">Data points</div>
+  </div>
+</div>
+
+<!-- ROW 1: Trend + Industry Bar -->
+<div class="row c2">
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>Automation Risk Trend 2020–2026</div>
+    <div class="chart-wrap h220"><canvas id="cTrend"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>AI Adoption Level by Industry</div>
+    <div class="chart-wrap h220"><canvas id="cIndustry"></canvas></div>
+  </div>
+</div>
+
+<!-- ROW 2: Donut + Progress -->
+<div class="row c2">
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>Risk Category Distribution</div>
+    <div class="chart-wrap h220"><canvas id="cDonut"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>Job Automation Risk by Role</div>
+    <div class="prog-list" id="progList"></div>
+  </div>
+</div>
+
+<!-- ROW 3: Country Bar + Bubble -->
+<div class="row c21">
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>AI Replacement Score by Country</div>
+    <div class="chart-wrap h200"><canvas id="cCountry"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>Skill Gap vs Reskilling Urgency</div>
+    <div class="chart-wrap h200"><canvas id="cBubble"></canvas></div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="card" style="margin-bottom:10px">
+  <div class="card-title"><span class="bar"></span>Records Preview — Top 10 Entries</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Job Role</th><th>Industry</th><th>Country</th>
+          <th>Year</th><th>Automation %</th><th>AI Score</th>
+          <th>Salary Before</th><th>Salary After</th><th>Risk</th>
+        </tr>
+      </thead>
+      <tbody id="tblBody"></tbody>
+    </table>
+  </div>
+</div>
+
+</main>
+<footer>AI Future Impact Analytics &nbsp;·&nbsp; 2020–2026 &nbsp;·&nbsp; Monis Ali &nbsp;·&nbsp; Data Analyst Portfolio</footer>
+
+<script>
+Chart.register(ChartDataLabels);
+Chart.defaults.font.family = 'DM Sans';
+Chart.defaults.color = '#666';
+Chart.defaults.borderColor = '#eee';
+// Globally disable datalabels — we'll enable per-chart
+Chart.defaults.set('plugins.datalabels', { display: false });
+
+// ─── RAW DATA (full 20 sample rows for filter logic) ───
+const RAW = [
+  {role:'Data Analyst',     ind:'Technology',    cntry:'Canada',    yr:2021, auto:26.22, ai:30.94, salB:101839, salA:99454,  risk:'Low'},
+  {role:'Accountant',       ind:'Finance',       cntry:'Brazil',    yr:2020, auto:52.08, ai:56.41, salB:146389, salA:139516, risk:'Medium'},
+  {role:'Teacher',          ind:'Technology',    cntry:'USA',       yr:2020, auto:31.30, ai:31.61, salB:64947,  salA:58369,  risk:'Medium'},
+  {role:'Customer Support', ind:'Technology',    cntry:'Brazil',    yr:2021, auto:56.92, ai:63.42, salB:91708,  salA:86715,  risk:'Medium'},
+  {role:'Teacher',          ind:'Manufacturing', cntry:'Japan',     yr:2024, auto:14.55, ai:17.17, salB:127007, salA:119379, risk:'Low'},
+  {role:'Software Engineer',ind:'Healthcare',    cntry:'Singapore', yr:2022, auto:8.54,  ai:8.53,  salB:139118, salA:150561, risk:'Low'},
+  {role:'Accountant',       ind:'Manufacturing', cntry:'Australia', yr:2020, auto:48.27, ai:42.18, salB:123015, salA:132100, risk:'Medium'},
+  {role:'Teacher',          ind:'Finance',       cntry:'Australia', yr:2026, auto:13.17, ai:12.25, salB:62561,  salA:59680,  risk:'Low'},
+  {role:'Marketing Spec.',  ind:'Retail',        cntry:'USA',       yr:2025, auto:19.86, ai:22.27, salB:148426, salA:138379, risk:'Low'},
+  {role:'Financial Analyst',ind:'Finance',       cntry:'Singapore', yr:2020, auto:59.48, ai:64.93, salB:38885,  salA:35622,  risk:'Medium'},
+  {role:'Truck Driver',     ind:'Transportation',cntry:'Germany',   yr:2023, auto:72.10, ai:71.50, salB:55000,  salA:48000,  risk:'High'},
+  {role:'HR Manager',       ind:'Healthcare',    cntry:'India',     yr:2022, auto:41.20, ai:43.80, salB:78000,  salA:80000,  risk:'Medium'},
+  {role:'Truck Driver',     ind:'Energy',        cntry:'UK',        yr:2024, auto:68.40, ai:69.00, salB:52000,  salA:46000,  risk:'High'},
+  {role:'Data Analyst',     ind:'Finance',       cntry:'USA',       yr:2023, auto:30.10, ai:32.50, salB:95000,  salA:98000,  risk:'Low'},
+  {role:'Mechanical Eng.',  ind:'Manufacturing', cntry:'Germany',   yr:2025, auto:44.80, ai:46.20, salB:88000,  salA:87000,  risk:'Medium'},
+  {role:'Software Engineer',ind:'Technology',    cntry:'India',     yr:2026, auto:9.20,  ai:10.10, salB:72000,  salA:78000,  risk:'Low'},
+  {role:'Customer Support', ind:'Retail',        cntry:'UK',        yr:2022, auto:58.30, ai:60.10, salB:42000,  salA:39000,  risk:'High'},
+  {role:'Financial Analyst',ind:'Healthcare',    cntry:'Canada',    yr:2021, auto:41.60, ai:44.00, salB:92000,  salA:94000,  risk:'Medium'},
+  {role:'Accountant',       ind:'Education',     cntry:'Japan',     yr:2023, auto:50.00, ai:52.30, salB:67000,  salA:65000,  risk:'Medium'},
+  {role:'Marketing Spec.',  ind:'Technology',    cntry:'Australia', yr:2024, auto:22.50, ai:24.00, salB:110000, salA:106000, risk:'Low'},
+];
+
+// ─── AGGREGATED DATA (for charts; stays fixed, filters only affect KPIs & table) ───
+const INDUSTRY_DATA = {
+  labels: ['Transport.','Manufact.','Finance','Retail','Healthcare','Education','Technology','Energy'],
+  values: [50.72, 50.44, 50.26, 50.23, 49.22, 49.01, 48.53, 49.97]
+};
+const COUNTRY_DATA = {
+  labels: ['Singapore','Australia','UK','Japan','India','Canada','USA','Brazil','Germany'],
+  values: [46.59, 46.44, 46.42, 46.37, 46.28, 46.20, 45.94, 45.62, 45.50]
+};
+const TREND_DATA = {
+  labels: ['2020','2021','2022','2023','2024','2025','2026'],
+  values: [46.50, 46.10, 46.31, 46.51, 45.36, 45.56, 46.87]
+};
+const DONUT_BASE = { High: 4496, Medium: 6464, Low: 4040 };
+
+// ─── CHART INSTANCES ───
+let chartTrend, chartIndustry, chartDonut, chartCountry, chartBubble;
+
+// ─── INIT ALL CHARTS ───
+function initCharts() {
+
+  // Trend Line
+  const ctx = document.getElementById('cTrend').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,220);
+  grad.addColorStop(0,'rgba(39,174,96,0.22)');
+  grad.addColorStop(1,'rgba(39,174,96,0)');
+  chartTrend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: TREND_DATA.labels,
+      datasets: [{
+        label: 'Automation Risk %',
+        data: TREND_DATA.values,
+        borderColor: '#27ae60',
+        backgroundColor: grad,
+        borderWidth: 2.5, fill: true, tension: 0.45,
+        pointBackgroundColor: '#27ae60',
+        pointBorderColor: '#fff', pointBorderWidth: 2,
+        pointRadius: 5, pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 24, right: 10 } },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          display: true,
+          align: 'top', anchor: 'end',
+          color: '#555',
+          font: { size: 10, weight: '600' },
+          formatter: v => v.toFixed(1) + '%'
+        }
+      },
+      scales: {
+        y: {
+          min: 44.5, max: 48.5,
+          grid: { color: '#f0f0f0' },
+          ticks: { callback: v => v + '%', font: { size: 11 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+
+  // Industry Bar
+  chartIndustry = new Chart('cIndustry', {
+    type: 'bar',
+    data: {
+      labels: INDUSTRY_DATA.labels,
+      datasets: [{
+        label: 'AI Adoption Level',
+        data: INDUSTRY_DATA.values,
+        backgroundColor: 'rgba(41,128,185,0.72)',
+        borderColor: '#2980b9',
+        borderWidth: 1, borderRadius: 5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          display: true,
+          align: 'top', anchor: 'end',
+          color: '#444',
+          font: { size: 10, weight: '600' },
+          formatter: v => v.toFixed(1)
+        }
+      },
+      scales: {
+        y: {
+          min: 47.5, max: 52.5,
+          grid: { color: '#f0f0f0' },
+          ticks: { font: { size: 11 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Donut - FIX: no datalabels inside slices (too cramped); use tooltip + legend only
+  chartDonut = new Chart('cDonut', {
+    type: 'doughnut',
+    data: {
+      labels: ['High Risk','Medium Risk','Low Risk'],
+      datasets: [{
+        data: [DONUT_BASE.High, DONUT_BASE.Medium, DONUT_BASE.Low],
+        backgroundColor: [
+          'rgba(231,76,60,0.85)',
+          'rgba(230,126,22,0.85)',
+          'rgba(39,174,96,0.85)'
+        ],
+        borderColor: '#fff', borderWidth: 3, hoverOffset: 12
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '58%',
+      layout: { padding: 8 },
+      plugins: {
+        datalabels: {
+          display: true,
+          color: '#fff',
+          font: { size: 13, weight: '700' },
+          formatter: (v, ctx) => {
+            const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+            const pct = ((v/total)*100).toFixed(1);
+            return pct + '%';
+          }
+        },
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 18, font: { size: 12 }, boxWidth: 13,
+            generateLabels: (chart) => {
+              const data = chart.data;
+              return data.labels.map((label, i) => ({
+                text: `${label}  (${data.datasets[0].data[i].toLocaleString()})`,
+                fillStyle: data.datasets[0].backgroundColor[i],
+                strokeStyle: data.datasets[0].backgroundColor[i],
+                hidden: false,
+                index: i
+              }));
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: c => {
+              const total = c.dataset.data.reduce((a,b)=>a+b,0);
+              const pct = ((c.raw/total)*100).toFixed(1);
+              return ` ${c.label}: ${c.raw.toLocaleString()} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Country Bar
+  chartCountry = new Chart('cCountry', {
+    type: 'bar',
+    data: {
+      labels: COUNTRY_DATA.labels,
+      datasets: [{
+        data: COUNTRY_DATA.values,
+        backgroundColor: [
+          'rgba(39,174,96,0.82)','rgba(39,174,96,0.72)','rgba(39,174,96,0.65)',
+          'rgba(22,160,133,0.72)','rgba(22,160,133,0.65)','rgba(22,160,133,0.58)',
+          'rgba(41,128,185,0.72)','rgba(41,128,185,0.65)','rgba(41,128,185,0.58)'
+        ],
+        borderRadius: 5, borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          display: true,
+          align: 'top', anchor: 'end',
+          color: '#444',
+          font: { size: 10, weight: '600' },
+          formatter: v => v.toFixed(1)
+        }
+      },
+      scales: {
+        y: {
+          min: 44.5, max: 48.5,
+          grid: { color: '#f0f0f0' },
+          ticks: { font: { size: 11 } }
+        },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Bubble / Scatter — FIX: labels via tooltip only, no inline text clipping
+  chartBubble = new Chart('cBubble', {
+    type: 'bubble',
+    data: {
+      datasets: [{
+        label: 'Job Roles',
+        data: [
+          {x:73, y:33, r:8,  role:'Data Analyst'},
+          {x:2,  y:22, r:7,  role:'Accountant'},
+          {x:43, y:28, r:6,  role:'Teacher'},
+          {x:19, y:30, r:7,  role:'Cust. Support'},
+          {x:3,  y:6,  r:5,  role:'Fin. Analyst'},
+          {x:76, y:26, r:6,  role:'Software Eng.'},
+          {x:96, y:48, r:8,  role:'Mech. Eng.'},
+          {x:31, y:25, r:6,  role:'HR Manager'},
+          {x:5,  y:12, r:7,  role:'Marketing'},
+          {x:67, y:54, r:9,  role:'Truck Driver'},
+        ],
+        backgroundColor: 'rgba(39,174,96,0.52)',
+        borderColor: '#27ae60', borderWidth: 1.5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 10, right: 14 } },
+      plugins: {
+        legend: { display: false },
+        datalabels: { display: false },
+        tooltip: {
+          callbacks: {
+            label: c => ` ${c.raw.role}  Gap: ${c.raw.x}  Urgency: ${c.raw.y}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Skill Gap Index', font: { size: 11 } },
+          grid: { color: '#f0f0f0' }
+        },
+        y: {
+          title: { display: true, text: 'Reskilling Urgency', font: { size: 11 } },
+          grid: { color: '#f0f0f0' }
+        }
+      }
+    }
+  });
+}
+
+// ─── PROGRESS BARS ───
+const PROG_DATA = [
+  {n:'Truck Driver',       v:60.74, cls:'r'},
+  {n:'Customer Support',   v:59.85, cls:'r'},
+  {n:'Marketing Spec.',    v:45.44, cls:'y'},
+  {n:'Mechanical Eng.',    v:45.40, cls:'y'},
+  {n:'Teacher',            v:45.14, cls:'y'},
+  {n:'HR Manager',         v:45.09, cls:'y'},
+  {n:'Accountant',         v:44.98, cls:'y'},
+  {n:'Financial Analyst',  v:44.70, cls:'y'},
+  {n:'Data Analyst',       v:35.46, cls:'g'},
+  {n:'Software Engineer',  v:34.85, cls:'g'},
+];
+
+function renderProgressBars() {
+  const pl = document.getElementById('progList');
+  pl.innerHTML = PROG_DATA.map(d => `
+    <div class="prog-item">
+      <div class="prog-head">
+        <span class="prog-name">${d.n}</span>
+        <span class="prog-pct">${d.v.toFixed(1)}%</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-fill ${d.cls}" data-width="${d.v}" style="width:0%"></div>
+      </div>
+    </div>`).join('');
+
+  // Animate bars after paint
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll('.prog-fill').forEach(el => {
+        el.style.width = el.dataset.width + '%';
+      });
+    }, 80);
+  });
+}
+
+// ─── TABLE ───
+function renderTable(data) {
+  const top10 = data.slice(0, 10);
+  const tbody = document.getElementById('tblBody');
+  if (!top10.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#bbb;padding:24px;font-style:italic;">No records match the selected filters.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = top10.map((r, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><b>${r.role}</b></td>
+      <td>${r.ind}</td>
+      <td>${r.cntry}</td>
+      <td>${r.yr}</td>
+      <td>${r.auto.toFixed(2)}%</td>
+      <td>${r.ai.toFixed(2)}</td>
+      <td>$${r.salB.toLocaleString()}</td>
+      <td>$${r.salA.toLocaleString()}</td>
+      <td><span class="badge ${r.risk}">${r.risk}</span></td>
+    </tr>`).join('');
+}
+
+// ─── FILTER + KPI UPDATE ───
+function applyFilters() {
+  const ind  = document.getElementById('fInd').value;
+  const cntry = document.getElementById('fCnt').value;
+  const yr   = document.getElementById('fYr').value;
+  const rsk  = document.getElementById('fRsk').value;
+
+  const filtered = RAW.filter(r => {
+    if (ind   !== 'all' && r.ind   !== ind)        return false;
+    if (cntry !== 'all' && r.cntry !== cntry)      return false;
+    if (yr    !== 'all' && String(r.yr) !== yr)    return false;
+    if (rsk   !== 'all' && r.risk  !== rsk)        return false;
+    return true;
+  });
+
+  // KPI updates
+  const scale = filtered.length > 0 ? filtered.length / RAW.length : 1;
+  if (filtered.length > 0) {
+    const avgAuto = filtered.reduce((s,r)=>s+r.auto,0)/filtered.length;
+    const avgAI   = filtered.reduce((s,r)=>s+r.ai,0)/filtered.length;
+    const avgSalB = filtered.reduce((s,r)=>s+r.salB,0)/filtered.length;
+    const avgSalA = filtered.reduce((s,r)=>s+r.salA,0)/filtered.length;
+    const scaledUrgency = 35.87 * (0.85 + scale * 0.15);
+
+    document.getElementById('kv1').textContent = avgAuto.toFixed(2) + '%';
+    document.getElementById('kv2').textContent = avgAI.toFixed(2);
+    document.getElementById('kv3').textContent = '$' + Math.round(avgSalB).toLocaleString();
+    document.getElementById('kv4').textContent = '$' + Math.round(avgSalA).toLocaleString();
+    document.getElementById('kv5').textContent = scaledUrgency.toFixed(2);
+    document.getElementById('kv6').textContent = (Math.round(15000 * scale)).toLocaleString();
+  } else {
+    document.getElementById('kv1').textContent = '—';
+    document.getElementById('kv2').textContent = '—';
+    document.getElementById('kv3').textContent = '—';
+    document.getElementById('kv4').textContent = '—';
+    document.getElementById('kv5').textContent = '—';
+    document.getElementById('kv6').textContent = '0';
+  }
+
+  renderTable(filtered.length > 0 ? filtered : []);
+}
+
+// ─── RESET ───
+document.getElementById('btnReset').addEventListener('click', () => {
+  ['fInd','fCnt','fYr','fRsk'].forEach(id => document.getElementById(id).value = 'all');
+  applyFilters();
+});
+
+// ─── FILTER LISTENERS ───
+['fInd','fCnt','fYr','fRsk'].forEach(id => {
+  document.getElementById(id).addEventListener('change', applyFilters);
+});
+
+// ─── BOOT ───
+initCharts();
+renderProgressBars();
+renderTable(RAW);
+</script>
+</body>
+</html>
